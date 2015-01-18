@@ -9,7 +9,7 @@
 
 Pod::Spec.new do |s|
   s.name             = "YSKDB"
-  s.version          = "0.0.2"
+  s.version          = "0.0.3"
   s.summary          = "Parse based wrapper for FMDB"
   s.description      = "YSKDB provides a simple way to use SQLite inspired by Parse"
   s.homepage         = "https://github.com/kitasuke/YSKDB"
