@@ -117,8 +117,7 @@
 
 + (BOOL)executeCreateQuery:(NSString *)query
 {
-    NSParameterAssert(tableName);
-    NSParameterAssert(params);
+    NSParameterAssert(query);
 
     FMDatabase *database = [self openWithKey];
     BOOL succeeded = [database executeUpdate:query];
