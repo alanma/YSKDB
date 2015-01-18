@@ -1,12 +1,11 @@
 source 'https://github.com/CocoaPods/Specs.git'
 
 target 'YSKDB', :exclusive => true do
-  pod "YSKDB", :path => "../"
+  pod "YSKDB"
 end
 
 target 'Tests', :exclusive => true do
-  pod "YSKDB", :path => "../"
-
+  pod "YSKDB"
   pod 'Specta', '~> 0.2.1'
   pod 'Expecta'
 end
