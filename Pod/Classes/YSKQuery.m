@@ -11,9 +11,6 @@ NSString * const YSKDBTypeNameText = @"TEXT";
 NSString * const YSKDBTypeNameBlob = @"BLOB";
 NSString * const YSKDBTypeNameNull = @"NULL";
 
-NSString * const YSKDBFieldNameCreatedAt = @"created_at";
-NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
-
 @interface YSKQuery ()
 
 @property (nonatomic, copy) NSString *tableName;
@@ -21,6 +18,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 @property (nonatomic, strong) NSMutableArray *wherePredicates;
 @property (nonatomic, strong) NSMutableArray *ascendingOrderPredicates;
 @property (nonatomic, strong) NSMutableArray *descendingOrderPredicates;
+@property (nonatomic, strong) NSMutableArray *upToDateKeys;
 
 @end
 
@@ -34,6 +32,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
     query.wherePredicates = [@[] mutableCopy];
     query.ascendingOrderPredicates = [@[] mutableCopy];
     query.descendingOrderPredicates = [@[] mutableCopy];
+    query.upToDateKeys = [@[] mutableCopy];
     return query;
 }
 
@@ -45,6 +44,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
     query.wherePredicates = [@[] mutableCopy];
     query.ascendingOrderPredicates = [@[] mutableCopy];
     query.descendingOrderPredicates = [@[] mutableCopy];
+    query.upToDateKeys = [@[] mutableCopy];
     return query;
 }
 
@@ -81,7 +81,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (void)whereKey:(NSString *)key greaterThan:(NSNumber *)number
 {
     NSParameterAssert(number && [number isKindOfClass:[NSNumber class]]);
-
+    
     NSString *operator = @">";
     [self addWherePredicateWithKey:key
                           operator:operator
@@ -91,7 +91,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (void)whereKey:(NSString *)key greaterThanOrEqualTo:(NSNumber *)number
 {
     NSParameterAssert(number && [number isKindOfClass:[NSNumber class]]);
-
+    
     NSString *operator = @">=";
     [self addWherePredicateWithKey:key
                           operator:operator
@@ -101,7 +101,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (void)whereKey:(NSString *)key lessThan:(NSNumber *)number
 {
     NSParameterAssert(number && [number isKindOfClass:[NSNumber class]]);
-
+    
     NSString *operator = @"<";
     [self addWherePredicateWithKey:key
                           operator:operator
@@ -111,7 +111,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (void)whereKey:(NSString *)key lessThanOrEqualTo:(NSNumber *)number
 {
     NSParameterAssert(number && [number isKindOfClass:[NSNumber class]]);
-
+    
     NSString *operator = @"<=";
     [self addWherePredicateWithKey:key
                           operator:operator
@@ -121,7 +121,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (void)whereKey:(NSString *)key containedIn:(NSArray *)objects
 {
     NSParameterAssert(objects);
-
+    
     NSString *operator = @"IN";
     [self addWherePredicateWithKey:key
                           operator:operator
@@ -131,7 +131,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (void)whereKey:(NSString *)key notContainedIn:(NSArray *)objects
 {
     NSParameterAssert(objects);
-
+    
     NSString *operator = @"NOT IN";
     [self addWherePredicateWithKey:key
                           operator:operator
@@ -174,13 +174,27 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
     [self.descendingOrderPredicates addObject:key];
 }
 
+- (void)upToDateKey:(NSString *)key
+{
+    if ([self.upToDateKeys containsObject:key])
+    {
+        return;
+    }
+    [self.upToDateKeys addObject:key];
+}
+
+- (void)upToDateKeys:(NSArray *)keys
+{
+    [self.upToDateKeys addObjectsFromArray:keys];
+}
+
 #pragma mark - SQL execute
 
 - (NSInteger)countObjects
 {
     NSString *countKey = @"count(*)";
     NSString *query = [NSString stringWithFormat:@"SELECT %@ FROM %@", countKey, self.tableName];
-
+    
     NSArray *results = [YSKDB executeSelectQuery:query];
     NSDictionary *countInfo = [results firstObject];
     return [countInfo[countKey] integerValue];
@@ -190,12 +204,12 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 {
     NSString *baseQuery = [NSString stringWithFormat:@"SELECT * FROM %@", self.tableName];
     NSString *query = [self stringByAppendingWherePredicates:baseQuery];
-
+    
     NSArray *results = [YSKDB executeSelectQuery:query];
     if ([results count] == 0) {
         return @{};
     }
-
+    
     return [results firstObject];
 }
 
@@ -203,19 +217,19 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 {
     NSString *query = [NSString stringWithFormat:@"SELECT * FROM %@", self.tableName];
     query = [query stringByAppendingFormat:@" WHERE id = %@", ID];
-
+    
     NSArray *results = [YSKDB executeSelectQuery:query];
     if ([results count] == 0) {
         return @{};
     }
-
+    
     return [results firstObject];
 }
 
 - (NSArray *)findObjects;
 {
     NSString *query = [self constructSelectQueryWithRandom:NO];
-
+    
     NSArray *results = [YSKDB executeSelectQuery:query];
     return results;
 }
@@ -223,7 +237,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (NSArray *)findRandomObjects;
 {
     NSString *query = [self constructSelectQueryWithRandom:YES];
-
+    
     NSArray *results = [YSKDB executeSelectQuery:query];
     return results;
 }
@@ -231,23 +245,32 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (BOOL)createTable:(NSDictionary *)params
 {
     NSString *query = [self constructCreateQueryWithParams:params];
-
+    
     return [YSKDB executeCreateQuery:query];
 }
 
 - (BOOL)insertObjects:(NSDictionary *)params
 {
     NSString *query = [self constructInsertQueryWithParams:params];
-    NSLog(@"query:%@", query);
-
+    
     return [YSKDB executeInsertQuery:query params:params];
 }
 
 - (BOOL)updateObjects:(NSDictionary *)params
 {
+    // add keys to be up-to-date
+    if ([self existsAutoDateUpdateKey]) {
+        NSAssert(params, @"Auto date update key should be added");
+        
+        NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithDictionary:params];
+        id currentTime = [self calculateCurrentTimeWithChosenType];
+        [[self.upToDateKeys copy] enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop) {
+            parameters[key] = currentTime;
+        }];
+        params = [parameters copy];
+    }
+    
     NSString *query = [self constructUpdateQueryWithParams:params];
-    NSLog(@"query:%@", query);
-
     return [YSKDB executeUpdateQuery:query params:params];
 }
 
@@ -274,7 +297,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
             [objectStrings addObject:[NSString stringWithFormat:@"'%@'", object]];
         }
     }];
-
+    
     NSString *predicate;
     predicate = [NSString stringWithFormat:@"%@ %@ (%@)", key, operator, [objectStrings componentsJoinedByString:@", "]];
     [self.wherePredicates addObject:predicate];
@@ -287,7 +310,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
     } else if ([self.wherePredicates count] > 0) {
         query = [query stringByAppendingFormat:@" WHERE %@", [self.wherePredicates componentsJoinedByString:@" AND "]];
     }
-
+    
     return query;
 }
 
@@ -297,13 +320,13 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
             [self.descendingOrderPredicates count] > 0) {
         query = [query stringByAppendingFormat:@" ORDER BY %@ DESC, %@", [self.descendingOrderPredicates componentsJoinedByString:@" DESC, "], [self.ascendingOrderPredicates componentsJoinedByString:@" ASC, "]];
     } else if ([self.ascendingOrderPredicates count] == 0 &&
-            [self.descendingOrderPredicates count] > 0) {
+                    [self.descendingOrderPredicates count] > 0) {
         query = [query stringByAppendingFormat:@" ORDER BY %@ DESC", [self.descendingOrderPredicates componentsJoinedByString:@" DESC, "]];
     } else if ([self.ascendingOrderPredicates count] > 0 &&
-            [self.descendingOrderPredicates count] == 0) {
+                    [self.descendingOrderPredicates count] == 0) {
         query = [query stringByAppendingFormat:@" ORDER BY %@ ASC", [self.ascendingOrderPredicates componentsJoinedByString:@" ASC, "]];
     }
-
+    
     return query;
 }
 
@@ -312,7 +335,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
     if (self.limit > 0) {
         query = [query stringByAppendingFormat:@" LIMIT %d", self.limit];
     }
-
+    
     if (self.skip > 0) {
         query = [query stringByAppendingFormat:@" OFFSET %d", self.skip];
     }
@@ -324,7 +347,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 - (NSString *)constructSelectQueryWithRandom:(BOOL)isRandom
 {
     NSString *query = [NSString stringWithFormat:@"SELECT * FROM %@", self.tableName];
-
+    
     query = [self stringByAppendingWherePredicates:query];
     if (isRandom) {
         query = [query stringByAppendingString:@" ORDER BY RANDOM()"];
@@ -332,7 +355,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
         query = [self stringByAppendingOrderPredicates:query];
     }
     query = [self stringByAppendingLimitAndOffsetPredicate:query];
-
+    
     return query;
 }
 
@@ -343,7 +366,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
     [keys enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop) {
         [values setObject:@"?" forKey:@(idx)];
     }];
-
+    
     NSString *query = [NSString stringWithFormat:@"INSERT INTO %@ (%@) VALUES (%@)", self.tableName, [keys componentsJoinedByString:@", "], [[values allValues] componentsJoinedByString:@", "]];
     return query;
 }
@@ -355,7 +378,7 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
         NSString *predicate = [NSString stringWithFormat:@"%@ = :%@", key, key];
         [values addObject:predicate];
     }];
-
+    
     NSString *query = [self stringByAppendingWherePredicates:[NSString stringWithFormat:@"UPDATE %@ SET %@", self.tableName, [values componentsJoinedByString:@", "]]];
     return query;
 }
@@ -364,12 +387,12 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
 {
     NSMutableArray *values = [@[] mutableCopy];
     [values addObject:[NSString stringWithFormat:@"id INTEGER PRIMARY KEY AUTOINCREMENT"]];
-
+    
     [params enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *type, BOOL *stop) {
         NSAssert([self isSupportedType:type], @"Type:%@ is not supported", type);
         [values addObject:[NSString stringWithFormat:@"%@ %@", key, type]];
     }];
-
+    
     NSString *query = [NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS %@ (%@)", self.tableName, [values componentsJoinedByString:@", "]];
     return query;
 }
@@ -384,6 +407,34 @@ NSString * const YSKDBFieldNameUpdatedAt = @"updated_at";
         return YES;
     }
     return NO;
+}
+
+- (BOOL)existsAutoDateUpdateKey
+{
+    switch (self.dateUpdateType) {
+        case YSKDBAutoDateUpdateTypeNSDate:
+        case YSKDBAutoDateUpdateTypeNSString:
+        case YSKDBAutoDateUpdateTypeFloat:
+            return YES;
+        case YSKDBAutoDateUpdateTypeNone:
+        default:
+            return NO;
+    }
+}
+
+- (id)calculateCurrentTimeWithChosenType
+{
+    switch (self.dateUpdateType) {
+        case YSKDBAutoDateUpdateTypeNSDate:
+            return [NSDate date];
+        case YSKDBAutoDateUpdateTypeNSString:
+            return [NSString stringWithFormat:@"%@", [NSDate date]];
+        case YSKDBAutoDateUpdateTypeFloat:
+            return @([NSDate date].timeIntervalSince1970);
+        case YSKDBAutoDateUpdateTypeNone:
+        default:
+            return nil;
+    }
 }
 
 @end
