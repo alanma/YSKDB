@@ -1,20 +1,28 @@
 PODS:
   - Expecta (0.3.1)
+  - FMDB/common (2.4)
+  - FMDB/SQLCipher (2.4):
+    - FMDB/common
+    - SQLCipher
   - Specta (0.2.1)
-  - YSKDB (0.1.0)
+  - SQLCipher (3.1.0):
+    - SQLCipher/standard
+  - SQLCipher/common (3.1.0)
+  - SQLCipher/standard (3.1.0):
+    - SQLCipher/common
+  - YSKDB (0.0.2):
+    - FMDB/SQLCipher
 
 DEPENDENCIES:
   - Expecta
   - Specta (~> 0.2.1)
-  - YSKDB (from `../`)
-
-EXTERNAL SOURCES:
-  YSKDB:
-    :path: ../
+  - YSKDB
 
 SPEC CHECKSUMS:
   Expecta: 03aabd0a89d8dea843baecb19a7fd7466a69a31d
+  FMDB: 0b2fa25e5264ef177973c0cb8c02c711107979aa
   Specta: 9141310f46b1f68b676650ff2854e1ed0b74163a
-  YSKDB: 66ed079d069ef3360e24f2413c7f5493876c54a2
+  SQLCipher: 981110217eb93c2779c34fb59e646a1c1da918d8
+  YSKDB: 51fc31a7627e9fff1e7301c78a30ba305be07c36
 
 COCOAPODS: 0.34.4

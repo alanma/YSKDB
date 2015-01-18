@@ -10,13 +10,18 @@ extern NSString * const YSKDBTypeNameText;
 extern NSString * const YSKDBTypeNameBlob;
 extern NSString * const YSKDBTypeNameNull;
 
-extern NSString * const YSKDBFieldNameCreatedAt;
-extern NSString * const YSKDBFieldNameUpdatedAt;
+typedef NS_ENUM(NSInteger , YSKDBAutoDateUpdateType) {
+    YSKDBAutoDateUpdateTypeNone,
+    YSKDBAutoDateUpdateTypeNSDate,
+    YSKDBAutoDateUpdateTypeNSString,
+    YSKDBAutoDateUpdateTypeFloat
+};
 
 @interface YSKQuery : NSObject
 
 @property (nonatomic) NSInteger limit;
 @property (nonatomic) NSInteger skip;
+@property (nonatomic) enum YSKDBAutoDateUpdateType dateUpdateType;
 
 + (instancetype)queryWithTableName:(NSString *)tableName;
 + (instancetype)queryWithTableName:(NSString *)tableName predicate:(NSPredicate *)predicate;
@@ -36,6 +41,9 @@ extern NSString * const YSKDBFieldNameUpdatedAt;
 - (void)orderByDescending:(NSString *)key;
 - (void)addAscendingOrder:(NSString *)key;
 - (void)addDescendingOrder:(NSString *)key;
+
+- (void)upToDateKey:(NSString *)key;
+- (void)upToDateKeys:(NSArray *)keys;
 
 - (NSInteger)countObjects;
 - (NSDictionary *)getObject;
