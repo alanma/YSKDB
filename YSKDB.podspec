@@ -11,10 +11,7 @@ Pod::Spec.new do |s|
   s.name             = "YSKDB"
   s.version          = "0.0.1"
   s.summary          = "Parse based wrapper for FMDB"
-  s.description      = "An optional longer description of YSKDB
-
-                       * Markdown format.
-                       * Don't worry about the indent, we strip it!"
+  s.description      = "YSKDB provides a simple way to use SQLite inspired by Parse"
   s.homepage         = "https://github.com/kitasuke/YSKDB"
   # s.screenshots     = "www.example.com/screenshots_1", "www.example.com/screenshots_2"
   s.license          = 'MIT'
